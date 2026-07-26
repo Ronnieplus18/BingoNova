@@ -22,16 +22,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+@3$x-*ykni1+j*u21z7kuc%0+w)m@76te@-9ed!ia04h%@jt-'
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-+@3$x-*ykni1+j*u21z7kuc%0+w)m@76te@-9ed!ia04h%@jt-'
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "Bingopro",
 ]
+
+# Render asigna automáticamente un hostname externo en esta variable de entorno.
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 
 # Application definition
@@ -165,3 +173,5 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
 CSRF_TRUSTED_ORIGINS = ['https://bingo-proyecto.onrender.com']
+if RENDER_EXTERNAL_HOSTNAME:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
