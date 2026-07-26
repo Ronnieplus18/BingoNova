@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.conf import settings
+from django.views.static import serve
 from django.contrib.auth import views as auth_views
 from bingo import views
 
@@ -85,5 +87,9 @@ urlpatterns = [
     # Logica de las bolas
     path('api/partida/<int:id_partida>/sacar_bola/', views.sacar_bola_api, name='sacar_bola_api'),
 
+    # ==========================================
+    # 6. ARCHIVOS MULTIMEDIA (fotos, comprobantes, imagen promocional)
+    # ==========================================
+    path('media/<path:path>', serve, {'document_root': settings.MEDIA_ROOT}),
 
 ]
