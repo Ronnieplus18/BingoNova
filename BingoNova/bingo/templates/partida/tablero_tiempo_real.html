@@ -37,6 +37,15 @@
                     </div>
                     <div class="text-center">
                         <span class="d-block small animate__animated animate__fadeInDown mb-1 fw-bold text-muted">Última Bola</span>
+                        <div id="esfera-sorteo" class="esfera-sorteo mx-auto d-none">
+                            <div class="esfera-sorteo-bola b1"></div>
+                            <div class="esfera-sorteo-bola b2"></div>
+                            <div class="esfera-sorteo-bola b3"></div>
+                            <div class="esfera-sorteo-bola b4"></div>
+                            <div class="esfera-sorteo-bola b5"></div>
+                            <div class="esfera-sorteo-bola b6"></div>
+                            <div class="esfera-sorteo-brillo"></div>
+                        </div>
                         <div id="display-ultima-bola" class="display-ultima-bola bg-body text-body rounded-circle d-flex justify-content-center align-items-center shadow-lg border border-4 border-warning mx-auto">
                             {{ partida.ultimabola|default:"--" }}
                         </div>
@@ -135,6 +144,28 @@
         'Forma de Z': [[0,1,2,3,4, 8, 12, 16, 20,21,22,23,24]],
         'Forma de Flecha': [[2, 6, 8, 12, 17, 22]]
     };
+
+    // ================================
+    // ARREGLO DE VOZ EN MÓVIL (iOS/Android bloquean el audio si no
+    // se "desbloquea" con un toque real del usuario, y Chrome Android
+    // a veces pausa la voz sola tras ~15s de silencio).
+    // ================================
+    let vozDesbloqueada = false;
+    function desbloquearVoz() {
+        if (!('speechSynthesis' in window) || vozDesbloqueada) return;
+        const utterVacio = new SpeechSynthesisUtterance(' ');
+        utterVacio.volume = 0;
+        window.speechSynthesis.speak(utterVacio);
+        window.speechSynthesis.getVoices();
+        vozDesbloqueada = true;
+    }
+    // Mantiene viva la voz en Android/Chrome (bug conocido: se pausa sola)
+    setInterval(() => {
+        if (window.speechSynthesis && window.speechSynthesis.speaking) {
+            window.speechSynthesis.pause();
+            window.speechSynthesis.resume();
+        }
+    }, 8000);
 
     // ================================
     // MOTOR DE VOZ DEL LOCUTOR 
@@ -370,10 +401,16 @@
         const isVozActive = localStorage.getItem('bingo_voz_' + idPartida) === 'true';
         if (swVoz) {
             swVoz.checked = isVozActive;
+            if (swVoz.checked) desbloquearVoz();
             swVoz.addEventListener('change', function() {
                 localStorage.setItem('bingo_voz_' + idPartida, this.checked);
+                if (this.checked) desbloquearVoz();
             });
         }
+        // Cualquier primer toque en la pantalla también desbloquea el audio
+        // (necesario sobre todo en iPhone/Safari).
+        document.addEventListener('touchstart', desbloquearVoz, { once: true });
+        document.addEventListener('click', desbloquearVoz, { once: true });
         // --------------------------------------------------
 
         // Carga inicial del historial en el tubo
@@ -451,40 +488,69 @@
         
         if (datos.evento === 'nueva_bola') {
             const numero = datos.numero;
-            cantarBolaConVoz(numero);
 
+            const esfera = document.getElementById('esfera-sorteo');
             const display = document.getElementById('display-ultima-bola');
-            if (display) {
-                display.innerText = numero;
-                display.classList.remove('animacion-entrada-bola');
-                void display.offsetWidth; 
-                display.classList.add('animacion-entrada-bola');
+
+            // 1. Mostramos la esfera "revolviendo" las bolas y ocultamos el número anterior
+            if (esfera && display) {
+                display.classList.add('d-none');
+                esfera.classList.remove('d-none');
             }
 
-            const tubo = document.getElementById('tubo-bolas');
-            if (tubo) {
-                if (!tubo.firstChild || tubo.firstChild.innerText != numero) {
-                    const nuevaBola = document.createElement('div');
-                    nuevaBola.className = 'bola-historial animacion-caida-tubo';
-                    nuevaBola.innerText = numero;
-                    tubo.insertBefore(nuevaBola, tubo.firstChild);
-                    if (tubo.children.length > 9) tubo.removeChild(tubo.lastChild);
+            // 2. Tras el suspenso, revelamos el número real y cantamos la bola
+            setTimeout(() => {
+                if (esfera && display) {
+                    esfera.classList.add('d-none');
+                    display.classList.remove('d-none');
                 }
-            }
+                revelarBola(numero);
+            }, 1400);
+        }
+    });
 
-            const celdas = document.querySelectorAll(`.celda-numero-${numero}`);
-            celdas.forEach(celda => {
-                if (!celda.classList.contains('celda-marcada')) {
-                    celda.classList.add('celda-pista', 'animacion-latido-pista');
-                }
-            });
+    function revelarBola(numero) {
+        cantarBolaConVoz(numero);
 
-            const swAuto = document.getElementById('switch-automarcado');
-            if (swAuto && swAuto.checked) {
-                setTimeout(ejecutarAutoMarcado, 400);
-            } else {
-                verificarCartones();
+        const display = document.getElementById('display-ultima-bola');
+        if (display) {
+            display.innerText = numero;
+            display.classList.remove('animacion-entrada-bola');
+            void display.offsetWidth; 
+            display.classList.add('animacion-entrada-bola');
+        }
+
+        const tubo = document.getElementById('tubo-bolas');
+        if (tubo) {
+            if (!tubo.firstChild || tubo.firstChild.innerText != numero) {
+                const nuevaBola = document.createElement('div');
+                nuevaBola.className = 'bola-historial animacion-caida-tubo';
+                nuevaBola.innerText = numero;
+                tubo.insertBefore(nuevaBola, tubo.firstChild);
+                if (tubo.children.length > 9) tubo.removeChild(tubo.lastChild);
             }
+        }
+
+        const celdas = document.querySelectorAll(`.celda-numero-${numero}`);
+        celdas.forEach(celda => {
+            if (!celda.classList.contains('celda-marcada')) {
+                celda.classList.add('celda-pista', 'animacion-latido-pista');
+            }
+        });
+
+        const swAuto = document.getElementById('switch-automarcado');
+        if (swAuto && swAuto.checked) {
+            setTimeout(ejecutarAutoMarcado, 400);
+        } else {
+            verificarCartones();
+        }
+    }
+
+    document.addEventListener('evento_partida', function(e) {
+        const datos = e.detail;
+
+        if (datos.evento === 'nueva_bola') {
+            return; // Ya se maneja arriba (esfera + revelarBola)
 
         // =======================================================
         // PERMISO DEL SERVIDOR PARA ESTAMPAR LA ESTRELLA
