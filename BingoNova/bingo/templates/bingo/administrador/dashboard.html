@@ -1,0 +1,910 @@
+{% extends 'comunes/base.html' %}
+{% load static %}
+{% block title %}Panel de Administración - BingoNova{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="fa-solid fa-gauge"></i> Panel de Administración</h2>
+
+<!-- ===================== TARJETAS RESUMEN ===================== -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card text-bg-primary h-100">
+            <div class="card-body">
+                <div class="text-uppercase small">Socios</div>
+                <div class="fs-2 fw-bold">{{ total_socios }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-success h-100">
+            <div class="card-body">
+                <div class="text-uppercase small">Jugadores</div>
+                <div class="fs-2 fw-bold">{{ total_jugadores }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-warning h-100">
+            <div class="card-body">
+                <div class="text-uppercase small">Bingos Activos</div>
+                <div class="fs-2 fw-bold">{{ bingos_activos }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-danger h-100">
+            <div class="card-body">
+                <div class="text-uppercase small">Deuda en la Calle</div>
+                <div class="fs-2 fw-bold">${{ deuda_calle }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== NAV TABS ===================== -->
+<ul class="nav nav-pills mb-3 flex-wrap" id="dashboardTabs" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-bingos" type="button">Bingos y Rondas</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-cartones" type="button">Cartones</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-socios" type="button">Socios</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-jugadores" type="button">Jugadores</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-finanzas" type="button">Finanzas</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-plataformas" type="button">Plataformas</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-monedas" type="button">Monedas</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-config" type="button">Configuración</button></li>
+</ul>
+
+<div class="tab-content">
+
+<!-- ===================== TAB: BINGOS Y PARTIDAS ===================== -->
+<div class="tab-pane fade show active" id="tab-bingos">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h4>Jornadas de Bingo</h4>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearBingo">
+            <i class="fa-solid fa-plus"></i> Nuevo Bingo
+        </button>
+    </div>
+    <div class="table-responsive mb-4">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>ID</th><th>Título</th><th>Fecha</th><th>Precio Cartón</th><th>Premio Mayor</th><th>Estado</th><th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in bingos %}
+                <tr>
+                    <td>{{ b.idbingo }}</td>
+                    <td>{{ b.titulobingo }}</td>
+                    <td>{{ b.fechaprogramadabingo }}</td>
+                    <td>{{ b.preciocarton }}</td>
+                    <td>{{ b.premiomayor }}</td>
+                    <td><span class="badge text-bg-secondary">{{ b.estadobingo }}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"
+                            data-bs-toggle="modal" data-bs-target="#modalEditarBingo"
+                            data-id="{{ b.idbingo }}"
+                            data-titulo="{{ b.titulobingo }}"
+                            data-fecha="{{ b.fechaprogramadabingo|date:'Y-m-d\TH:i' }}"
+                            data-tipo="{{ b.tipobingo }}"
+                            data-lugar="{{ b.lugarbingo|default:'' }}"
+                            data-url="{{ b.urlsesionbingo|default:'' }}"
+                            data-precio="{{ b.preciocarton }}"
+                            data-premio="{{ b.premiomayor }}"
+                            data-descpremio="{{ b.descripcionpremiomayor }}"
+                            data-estado="{{ b.estadobingo }}"
+                            data-descripcionpremios="{{ b.descripcionpremios|default:'' }}"
+                            data-unidadventa="{{ b.idunidad_venta_id }}"
+                            data-unidadpremio="{{ b.idunidad_premio_id }}">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-success"
+                            data-bs-toggle="modal" data-bs-target="#modalCrearPartida"
+                            data-idbingo="{{ b.idbingo }}">
+                            <i class="fa-solid fa-play"></i> Ronda
+                        </button>
+                        <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este Bingo por completo?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="eliminar_bingo">
+                            <input type="hidden" name="id_bingo" value="{{ b.idbingo }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted">No hay bingos registrados todavía.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h4>Rondas / Partidas</h4>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr><th>ID</th><th>Bingo</th><th>Ronda</th><th>Modalidad</th><th>Premio</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+                {% for p in partidas %}
+                <tr>
+                    <td>{{ p.idpartidabingo }}</td>
+                    <td>{{ p.idbingo.titulobingo }}</td>
+                    <td>{{ p.nombreronda }}</td>
+                    <td>{{ p.modalidad_victoria }}</td>
+                    <td>{{ p.valorpremio|default:"-" }} {{ p.premiomaterial }}</td>
+                    <td><span class="badge text-bg-info">{{ p.estadopartida }}</span></td>
+                    <td>
+                        <a href="{% url 'tablero_admin' p.idpartidabingo %}" class="btn btn-sm btn-outline-secondary" title="Ir al tablero"><i class="fa-solid fa-tv"></i></a>
+                        {% if p.premiomaterial and p.premiomaterial != 'Ninguno' and p.estadopremiomaterial != 'Entregado' %}
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="entregar_premio_fisico">
+                            <input type="hidden" name="id_partida" value="{{ p.idpartidabingo }}">
+                            <button class="btn btn-sm btn-outline-success" title="Marcar premio como entregado"><i class="fa-solid fa-gift"></i></button>
+                        </form>
+                        {% endif %}
+                        <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar esta ronda?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="eliminar_partida">
+                            <input type="hidden" name="id_partida" value="{{ p.idpartidabingo }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted">No hay rondas creadas todavía.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ===================== TAB: CARTONES ===================== -->
+<div class="tab-pane fade" id="tab-cartones">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h4>Catálogo de Cartones Maestros</h4>
+        <form method="post" class="d-flex gap-2">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="generar_cartones">
+            <input type="number" name="cantidad_cartones" min="1" class="form-control" style="width:120px" placeholder="Cantidad" required>
+            <button class="btn btn-primary"><i class="fa-solid fa-industry"></i> Generar Lote</button>
+        </form>
+    </div>
+    <div class="table-responsive" style="max-height:500px; overflow-y:auto;">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>ID</th><th>Código</th><th>¿Maestro?</th><th>Acciones</th></tr></thead>
+            <tbody>
+                {% for c in cartones %}
+                <tr>
+                    <td>{{ c.idcarton }}</td>
+                    <td>{{ c.codigocarton }}</td>
+                    <td>{% if c.esmaestro %}<span class="badge text-bg-success">Sí</span>{% else %}<span class="badge text-bg-secondary">No</span>{% endif %}</td>
+                    <td>
+                        <form method="post" class="d-inline" onsubmit="return confirm('¿Retirar este cartón del inventario?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="eliminar_carton">
+                            <input type="hidden" name="id_carton" value="{{ c.idcarton }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted">No hay cartones generados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ===================== TAB: SOCIOS ===================== -->
+<div class="tab-pane fade" id="tab-socios">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h4>Socios</h4>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearTipoSocio">
+            <i class="fa-solid fa-plus"></i> Nuevo Tipo de Socio
+        </button>
+    </div>
+
+    <div class="mb-3">
+        <span class="fw-bold">Tipos de Socio:</span>
+        {% for t in tipos_socio %}
+        <span class="badge text-bg-light border me-1">
+            {{ t.nombretiposocio }}
+            <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este tipo de socio?');">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="eliminar_tiposocio">
+                <input type="hidden" name="id_tipo" value="{{ t.idtiposocio }}">
+                <button class="btn btn-sm btn-link text-danger p-0 ms-1"><i class="fa-solid fa-xmark"></i></button>
+            </form>
+        </span>
+        {% endfor %}
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>ID</th><th>Nombre</th><th>Cédula</th><th>Teléfono</th><th>Tipo</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody>
+                {% for s in socios %}
+                <tr>
+                    <td>{{ s.idsocio }}</td>
+                    <td>{{ s.primernombresocio }} {{ s.primerapellidosocio }}</td>
+                    <td>{{ s.cisocio }}</td>
+                    <td>{{ s.telefonopersonalsocio }}</td>
+                    <td>{{ s.idtiposocio.nombretiposocio }}</td>
+                    <td><span class="badge {% if s.estadosocio == 'Activo' %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ s.estadosocio }}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"
+                            data-bs-toggle="modal" data-bs-target="#modalEditarSocio"
+                            data-id="{{ s.idsocio }}"
+                            data-cedula="{{ s.cisocio }}"
+                            data-nombres="{{ s.primernombresocio }}"
+                            data-apellidos="{{ s.primerapellidosocio }}"
+                            data-telefono="{{ s.telefonopersonalsocio }}"
+                            data-estado="{{ s.estadosocio }}"
+                            data-tipo="{{ s.idtiposocio_id }}">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted">No hay socios registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ===================== TAB: JUGADORES ===================== -->
+<div class="tab-pane fade" id="tab-jugadores">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h4>Jugadores</h4>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalRecargaMasiva">
+            <i class="fa-solid fa-bolt"></i> Recarga Masiva de Crédito
+        </button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th><input type="checkbox" id="checkAllJugadores"></th><th>ID</th><th>Alias</th><th>Cédula</th><th>Correo</th><th>Saldo Real</th><th>Saldo Virtual</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody>
+                {% for j in jugadores %}
+                <tr>
+                    <td><input type="checkbox" class="checkJugador" value="{{ j.idjugador }}"></td>
+                    <td>{{ j.idjugador }}</td>
+                    <td>{{ j.aliasjugador }}</td>
+                    <td>{{ j.cedulaidentidadjugador|default:"-" }}</td>
+                    <td>{{ j.correojugador|default:"-" }}</td>
+                    <td>${{ j.saldocreditojugador }}</td>
+                    <td>{{ j.saldovirtualjugador }}</td>
+                    <td><span class="badge {% if j.estadocuentajugador == 'Activo' %}text-bg-success{% else %}text-bg-danger{% endif %}">{{ j.estadocuentajugador }}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"
+                            data-bs-toggle="modal" data-bs-target="#modalEditarJugador"
+                            data-id="{{ j.idjugador }}"
+                            data-alias="{{ j.aliasjugador }}"
+                            data-cedula="{{ j.cedulaidentidadjugador|default:'' }}"
+                            data-correo="{{ j.correojugador|default:'' }}"
+                            data-estado="{{ j.estadocuentajugador }}">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9" class="text-center text-muted">No hay jugadores registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ===================== TAB: FINANZAS ===================== -->
+<div class="tab-pane fade" id="tab-finanzas">
+    <h4>Préstamos</h4>
+    <div class="table-responsive mb-4" style="max-height:350px; overflow-y:auto;">
+        <table class="table table-sm table-hover align-middle">
+            <thead><tr><th>ID</th><th>Socio</th><th>Monto</th><th>Saldo Pendiente</th><th>Estado</th></tr></thead>
+            <tbody>
+                {% for p in prestamos %}
+                <tr>
+                    <td>{{ p.idprestamo }}</td>
+                    <td>{{ p.idsocio }}</td>
+                    <td>${{ p.montoprestamosolicitado }}</td>
+                    <td>${{ p.saldopendiente }}</td>
+                    <td><span class="badge text-bg-secondary">{{ p.estadoprestamo }}</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">Sin préstamos registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h4>Pagos</h4>
+    <div class="table-responsive mb-4" style="max-height:300px; overflow-y:auto;">
+        <table class="table table-sm table-hover align-middle">
+            <thead><tr><th>ID</th><th>Préstamo</th><th>Monto</th><th>Fecha</th><th>Estado</th></tr></thead>
+            <tbody>
+                {% for p in pagos %}
+                <tr>
+                    <td>{{ p.idpago }}</td>
+                    <td>{{ p.idprestamo_id }}</td>
+                    <td>${{ p.montopagado }}</td>
+                    <td>{{ p.fechapago }}</td>
+                    <td><span class="badge text-bg-secondary">{{ p.estadopago }}</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">Sin pagos registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h4>Ahorros</h4>
+    <div class="table-responsive mb-4" style="max-height:300px; overflow-y:auto;">
+        <table class="table table-sm table-hover align-middle">
+            <thead><tr><th>ID</th><th>Socio</th><th>Tipo</th><th>Monto</th><th>Estado</th></tr></thead>
+            <tbody>
+                {% for a in ahorros %}
+                <tr>
+                    <td>{{ a.idahorro }}</td>
+                    <td>{{ a.idsocio }}</td>
+                    <td>{{ a.tipoahorro }}</td>
+                    <td>${{ a.montoahorro }}</td>
+                    <td><span class="badge text-bg-secondary">{{ a.estadoahorro }}</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">Sin ahorros registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h4>Aportes Semanales</h4>
+    <div class="table-responsive" style="max-height:300px; overflow-y:auto;">
+        <table class="table table-sm table-hover align-middle">
+            <thead><tr><th>ID</th><th>Socio</th><th>Monto</th><th>Estado</th></tr></thead>
+            <tbody>
+                {% for a in aportes_semanales %}
+                <tr>
+                    <td>{{ a.idaporte }}</td>
+                    <td>{{ a.idsocio }}</td>
+                    <td>${{ a.montoaportesemanal }}</td>
+                    <td><span class="badge text-bg-secondary">{{ a.estadoaporte }}</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted">Sin aportes registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ===================== TAB: PLATAFORMAS ===================== -->
+<div class="tab-pane fade" id="tab-plataformas">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h4>Plataformas de Juego</h4>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearPlataforma">
+            <i class="fa-solid fa-plus"></i> Nueva Plataforma
+        </button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>ID</th><th>Nombre</th><th>URL</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody>
+                {% for p in plataformas %}
+                <tr>
+                    <td>{{ p.idplataformajuego }}</td>
+                    <td>{{ p.nombreplataforma }}</td>
+                    <td><a href="{{ p.urlplataforma }}" target="_blank">{{ p.urlplataforma }}</a></td>
+                    <td>{% if p.estadoplataforma %}<span class="badge text-bg-success">Activa</span>{% else %}<span class="badge text-bg-secondary">Inactiva</span>{% endif %}</td>
+                    <td>
+                        <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar esta plataforma?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="eliminar_plataforma">
+                            <input type="hidden" name="id_plataforma" value="{{ p.idplataformajuego }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">No hay plataformas registradas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ===================== TAB: MONEDAS ===================== -->
+<div class="tab-pane fade" id="tab-monedas">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h4>Unidades Monetarias</h4>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearMoneda">
+            <i class="fa-solid fa-plus"></i> Nueva Moneda
+        </button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th>ID</th><th>Nombre</th><th>Tipo</th><th>Símbolo</th><th>Tasa</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody>
+                {% for m in todas_monedas %}
+                <tr>
+                    <td>{{ m.idunidadmonetaria }}</td>
+                    <td>{{ m.nombremoneda }}</td>
+                    <td>{{ m.tipomoneda }}</td>
+                    <td>{{ m.simbolomoneda }}</td>
+                    <td>{{ m.tasaconversionmoneda }}</td>
+                    <td>{% if m.estadomoneda %}<span class="badge text-bg-success">Activa</span>{% else %}<span class="badge text-bg-secondary">Inactiva</span>{% endif %}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"
+                            data-bs-toggle="modal" data-bs-target="#modalEditarMoneda"
+                            data-id="{{ m.idunidadmonetaria }}"
+                            data-nombre="{{ m.nombremoneda }}"
+                            data-tipo="{{ m.tipomoneda }}"
+                            data-simbolo="{{ m.simbolomoneda }}"
+                            data-tasa="{{ m.tasaconversionmoneda }}"
+                            data-estado="{{ m.estadomoneda|yesno:'on,' }}">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar esta moneda?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="eliminar_moneda">
+                            <input type="hidden" name="id_moneda" value="{{ m.idunidadmonetaria }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted">No hay monedas registradas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ===================== TAB: CONFIGURACIÓN ===================== -->
+<div class="tab-pane fade" id="tab-config">
+    <h4>Configuración General del Sitio</h4>
+    <form method="post" enctype="multipart/form-data" class="row g-3">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="editar_configuracion">
+        <div class="col-md-6">
+            <label class="form-label">Título "Sobre Nosotros"</label>
+            <input type="text" name="titulosobrenosotros" class="form-control" value="{{ config_web.titulosobrenosotros|default:'' }}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Número de WhatsApp</label>
+            <input type="text" name="numerowhatsapp" class="form-control" value="{{ config_web.numerowhatsapp|default:'' }}">
+        </div>
+        <div class="col-12">
+            <label class="form-label">Descripción "Sobre Nosotros"</label>
+            <textarea name="descripcionsobrenosotros" class="form-control" rows="3">{{ config_web.descripcionsobrenosotros|default:'' }}</textarea>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Enlace de Instagram</label>
+            <input type="url" name="enlaceinstagram" class="form-control" value="{{ config_web.enlaceinstagram|default:'' }}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Enlace de Facebook</label>
+            <input type="url" name="enlacefacebook" class="form-control" value="{{ config_web.enlacefacebook|default:'' }}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Imagen Promocional</label>
+            <input type="file" name="imagenpromocional" class="form-control">
+        </div>
+        <div class="col-12">
+            <button class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar Configuración</button>
+        </div>
+    </form>
+</div>
+
+</div><!-- /tab-content -->
+{% endblock %}
+
+{% block modals %}
+
+<!-- MODAL: Crear Bingo -->
+<div class="modal fade" id="modalCrearBingo" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form method="post" enctype="multipart/form-data" class="modal-content">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="crear_bingo">
+      <div class="modal-header"><h5 class="modal-title">Nuevo Bingo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body row g-3">
+        <div class="col-md-8"><label class="form-label">Título</label><input type="text" name="titulobingo" class="form-control" required></div>
+        <div class="col-md-4"><label class="form-label">Tipo</label>
+            <select name="tipobingo" class="form-select" required>
+                <option value="Virtual">Virtual</option>
+                <option value="Presencial">Presencial</option>
+            </select>
+        </div>
+        <div class="col-md-6"><label class="form-label">Fecha y Hora del Evento</label><input type="datetime-local" name="fechaprogramadabingo" class="form-control" required></div>
+        <div class="col-md-6"><label class="form-label">Estado</label>
+            <select name="estadobingo" class="form-select">
+                <option value="Programado">Programado</option>
+                <option value="En Curso">En Curso</option>
+                <option value="Finalizado">Finalizado</option>
+                <option value="Cancelado">Cancelado</option>
+            </select>
+        </div>
+        <div class="col-md-6"><label class="form-label">Lugar (si es presencial)</label><input type="text" name="lugarbingo" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">URL de la sesión (si es virtual)</label><input type="text" name="urlsesionbingo" class="form-control"></div>
+        <div class="col-md-4"><label class="form-label">Precio del Cartón</label><input type="number" step="0.01" name="preciocarton" class="form-control" required></div>
+        <div class="col-md-4"><label class="form-label">Premio Mayor</label><input type="number" step="0.01" name="premiomayor" class="form-control" required></div>
+        <div class="col-md-4"><label class="form-label">Descripción del Premio Mayor</label><input type="text" name="descripcionpremiomayor" class="form-control" required></div>
+        <div class="col-md-6"><label class="form-label">Moneda de Venta</label>
+            <select name="idunidad_venta" class="form-select" required>
+                {% for u in unidades_monetarias %}<option value="{{ u.idunidadmonetaria }}">{{ u.nombremoneda }} ({{ u.simbolomoneda }})</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-md-6"><label class="form-label">Moneda del Premio</label>
+            <select name="idunidad_premio" class="form-select" required>
+                {% for u in unidades_monetarias %}<option value="{{ u.idunidadmonetaria }}">{{ u.nombremoneda }} ({{ u.simbolomoneda }})</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-12"><label class="form-label">Descripción de otros premios</label><textarea name="descripcionpremios" class="form-control" rows="2"></textarea></div>
+        <div class="col-md-6"><label class="form-label">Imagen del Premio</label><input type="file" name="rutaimagenpremiomayor" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">Video Promocional</label><input type="file" name="urlvideopromocional" class="form-control"></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-primary">Crear Bingo</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Editar Bingo -->
+<div class="modal fade" id="modalEditarBingo" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form method="post" enctype="multipart/form-data" class="modal-content">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="editar_bingo">
+      <input type="hidden" name="id_bingo" id="edit_bingo_id">
+      <div class="modal-header"><h5 class="modal-title">Editar Bingo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body row g-3">
+        <div class="col-md-8"><label class="form-label">Título</label><input type="text" name="titulobingo" id="edit_bingo_titulo" class="form-control" required></div>
+        <div class="col-md-4"><label class="form-label">Tipo</label>
+            <select name="tipobingo" id="edit_bingo_tipo" class="form-select">
+                <option value="Virtual">Virtual</option>
+                <option value="Presencial">Presencial</option>
+            </select>
+        </div>
+        <div class="col-md-6"><label class="form-label">Fecha y Hora</label><input type="datetime-local" name="fechaprogramadabingo" id="edit_bingo_fecha" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">Estado</label>
+            <select name="estadobingo" id="edit_bingo_estado" class="form-select">
+                <option value="Programado">Programado</option>
+                <option value="En Curso">En Curso</option>
+                <option value="Finalizado">Finalizado</option>
+                <option value="Cancelado">Cancelado</option>
+            </select>
+        </div>
+        <div class="col-md-6"><label class="form-label">Lugar</label><input type="text" name="lugarbingo" id="edit_bingo_lugar" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">URL de la sesión</label><input type="text" name="urlsesionbingo" id="edit_bingo_url" class="form-control"></div>
+        <div class="col-md-4"><label class="form-label">Precio del Cartón</label><input type="number" step="0.01" name="preciocarton" id="edit_bingo_precio" class="form-control"></div>
+        <div class="col-md-4"><label class="form-label">Premio Mayor</label><input type="number" step="0.01" name="premiomayor" id="edit_bingo_premio" class="form-control"></div>
+        <div class="col-md-4"><label class="form-label">Descripción del Premio</label><input type="text" name="descripcionpremiomayor" id="edit_bingo_descpremio" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">Moneda de Venta</label>
+            <select name="idunidad_venta" id="edit_bingo_unidadventa" class="form-select">
+                {% for u in unidades_monetarias %}<option value="{{ u.idunidadmonetaria }}">{{ u.nombremoneda }} ({{ u.simbolomoneda }})</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-md-6"><label class="form-label">Moneda del Premio</label>
+            <select name="idunidad_premio" id="edit_bingo_unidadpremio" class="form-select">
+                {% for u in unidades_monetarias %}<option value="{{ u.idunidadmonetaria }}">{{ u.nombremoneda }} ({{ u.simbolomoneda }})</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-12"><label class="form-label">Descripción de otros premios</label><textarea name="descripcionpremios" id="edit_bingo_descripcionpremios" class="form-control" rows="2"></textarea></div>
+        <div class="col-md-6"><label class="form-label">Nueva Imagen del Premio (opcional)</label><input type="file" name="rutaimagenpremiomayor" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">Nuevo Video Promocional (opcional)</label><input type="file" name="urlvideopromocional" class="form-control"></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-primary">Guardar Cambios</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Crear Partida -->
+<div class="modal fade" id="modalCrearPartida" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="post" class="modal-content">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="crear_partida">
+      <input type="hidden" name="idbingo" id="crear_partida_idbingo">
+      <div class="modal-header"><h5 class="modal-title">Nueva Ronda</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body row g-3">
+        <div class="col-12"><label class="form-label">Nombre de la Ronda</label><input type="text" name="nombreronda" class="form-control" required></div>
+        <div class="col-12"><label class="form-label">Modalidad de Victoria</label>
+            <select name="modalidad_victoria" class="form-select">
+                <option value="Tabla Llena">Tabla Llena</option>
+                <option value="Las Cuatro Esquinas">Las Cuatro Esquinas</option>
+                <option value="Linea Vertical">Linea Vertical</option>
+                <option value="En Diagonal">En Diagonal</option>
+                <option value="Forma de X">Forma de X</option>
+                <option value="Forma de Cruz">Forma de Cruz</option>
+                <option value="Marco de Foto">Marco de Foto</option>
+                <option value="Forma de L">Forma de L</option>
+                <option value="Forma de C">Forma de C</option>
+                <option value="Forma de T">Forma de T</option>
+                <option value="Forma de U">Forma de U</option>
+                <option value="Forma de H">Forma de H</option>
+                <option value="Forma de Z">Forma de Z</option>
+                <option value="Forma de Flecha">Forma de Flecha</option>
+            </select>
+        </div>
+        <div class="col-12 form-check">
+            <input type="checkbox" class="form-check-input" name="es_pozo_mayor" id="crear_partida_pozo">
+            <label class="form-check-label" for="crear_partida_pozo">Esta ronda juega por el Pozo Mayor</label>
+        </div>
+        <div class="col-md-6"><label class="form-label">Valor del Premio (si no es pozo mayor)</label><input type="number" step="0.01" name="valorpremio" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">Premio Material (opcional)</label><input type="text" name="premiomaterial" class="form-control"></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-primary">Crear Ronda</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Crear Tipo de Socio -->
+<div class="modal fade" id="modalCrearTipoSocio" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="post" class="modal-content">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="crear_tiposocio">
+      <div class="modal-header"><h5 class="modal-title">Nuevo Tipo de Socio</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body row g-3">
+        <div class="col-12"><label class="form-label">Nombre</label><input type="text" name="nombretiposocio" class="form-control" required></div>
+        <div class="col-12"><label class="form-label">Rol</label><input type="text" name="roltiposocio" class="form-control" required></div>
+        <div class="col-12"><label class="form-label">Descripción</label><textarea name="descripciondetiposocio" class="form-control" rows="2"></textarea></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-primary">Crear</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Editar Socio -->
+<div class="modal fade" id="modalEditarSocio" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="post" class="modal-content">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="editar_socio">
+      <input type="hidden" name="id_socio" id="edit_socio_id">
+      <div class="modal-header"><h5 class="modal-title">Editar Socio</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body row g-3">
+        <div class="col-6"><label class="form-label">Cédula</label><input type="text" name="cedula" id="edit_socio_cedula" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Teléfono</label><input type="text" name="telefono" id="edit_socio_telefono" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Nombres</label><input type="text" name="nombres" id="edit_socio_nombres" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Apellidos</label><input type="text" name="apellidos" id="edit_socio_apellidos" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Estado</label>
+            <select name="estado" id="edit_socio_estado" class="form-select">
+                <option value="Activo">Activo</option>
+                <option value="Inactivo">Inactivo</option>
+            </select>
+        </div>
+        <div class="col-6"><label class="form-label">Tipo de Socio</label>
+            <select name="id_tipo_socio" id="edit_socio_tipo" class="form-select">
+                {% for t in tipos_socio %}<option value="{{ t.idtiposocio }}">{{ t.nombretiposocio }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-12"><label class="form-label">Nueva Contraseña (opcional)</label><input type="password" name="password_nueva" class="form-control" placeholder="Dejar en blanco para no cambiarla"></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-primary">Guardar Cambios</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Editar Jugador -->
+<div class="modal fade" id="modalEditarJugador" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="post" class="modal-content">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="editar_jugador">
+      <input type="hidden" name="id_jugador" id="edit_jugador_id">
+      <div class="modal-header"><h5 class="modal-title">Editar Jugador</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body row g-3">
+        <div class="col-6"><label class="form-label">Alias</label><input type="text" name="alias" id="edit_jugador_alias" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Cédula</label><input type="text" name="cedula" id="edit_jugador_cedula" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Correo</label><input type="email" name="correo" id="edit_jugador_correo" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Estado</label>
+            <select name="estado" id="edit_jugador_estado" class="form-select">
+                <option value="Activo">Activo</option>
+                <option value="Suspendido">Suspendido</option>
+                <option value="Moroso">Moroso</option>
+            </select>
+        </div>
+        <div class="col-12"><label class="form-label">Nueva Contraseña (opcional)</label><input type="password" name="password_nueva" class="form-control" placeholder="Dejar en blanco para no cambiarla"></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-primary">Guardar Cambios</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Recarga Masiva de Crédito -->
+<div class="modal fade" id="modalRecargaMasiva" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="post" class="modal-content" id="formRecargaMasiva">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="recarga_masiva_credito">
+      <input type="hidden" name="jugadores_ids" id="recarga_jugadores_ids">
+      <div class="modal-header"><h5 class="modal-title">Recarga Masiva de Crédito</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body row g-3">
+        <div class="col-12">
+            <p class="text-muted small mb-1">Jugadores seleccionados en la pestaña "Jugadores": <span id="contadorSeleccionados">0</span></p>
+        </div>
+        <div class="col-6"><label class="form-label">Tipo de Saldo</label>
+            <select name="tipo_saldo" class="form-select">
+                <option value="real">Saldo Real (Efectivo)</option>
+                <option value="virtual">Saldo Virtual (Puntos)</option>
+            </select>
+        </div>
+        <div class="col-6"><label class="form-label">Monto a Inyectar</label><input type="number" step="0.01" name="monto" class="form-control" required></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-primary">Inyectar Crédito</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Crear Plataforma -->
+<div class="modal fade" id="modalCrearPlataforma" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="post" enctype="multipart/form-data" class="modal-content">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="crear_plataforma">
+      <div class="modal-header"><h5 class="modal-title">Nueva Plataforma de Juego</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body row g-3">
+        <div class="col-12"><label class="form-label">Nombre</label><input type="text" name="nombreplataforma" class="form-control" required></div>
+        <div class="col-12"><label class="form-label">URL</label><input type="url" name="urlplataforma" class="form-control" required></div>
+        <div class="col-12"><label class="form-label">Descripción</label><textarea name="descripcionplataforma" class="form-control" rows="2"></textarea></div>
+        <div class="col-12"><label class="form-label">Contacto del Proveedor</label><input type="text" name="contactoplataforma" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Fecha de Adquisición</label><input type="date" name="fechaadquisicionlicencia" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Fecha de Vencimiento</label><input type="date" name="fechavencimientolicencia" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Logo</label><input type="file" name="logoplataforma" class="form-control"></div>
+        <div class="col-6 form-check mt-4">
+            <input type="checkbox" class="form-check-input" name="estadoplataforma" id="crear_plataforma_estado" checked>
+            <label class="form-check-label" for="crear_plataforma_estado">Activa</label>
+        </div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-primary">Crear Plataforma</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Crear Moneda -->
+<div class="modal fade" id="modalCrearMoneda" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="post" class="modal-content">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="crear_moneda">
+      <div class="modal-header"><h5 class="modal-title">Nueva Unidad Monetaria</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body row g-3">
+        <div class="col-12"><label class="form-label">Nombre</label><input type="text" name="nombremoneda" class="form-control" required></div>
+        <div class="col-6"><label class="form-label">Tipo</label>
+            <select name="tipomoneda" class="form-select">
+                <option value="Efectivo">Efectivo</option>
+                <option value="Virtual">Virtual</option>
+            </select>
+        </div>
+        <div class="col-6"><label class="form-label">Símbolo</label><input type="text" name="simbolomoneda" class="form-control" required></div>
+        <div class="col-6"><label class="form-label">Tasa de Conversión</label><input type="number" step="0.0001" name="tasaconversionmoneda" class="form-control" value="1.00" required></div>
+        <div class="col-6 form-check mt-4">
+            <input type="checkbox" class="form-check-input" name="estadomoneda" id="crear_moneda_estado" checked>
+            <label class="form-check-label" for="crear_moneda_estado">Activa</label>
+        </div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-primary">Crear Moneda</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Editar Moneda -->
+<div class="modal fade" id="modalEditarMoneda" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="post" class="modal-content">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="editar_moneda">
+      <input type="hidden" name="id_moneda" id="edit_moneda_id">
+      <div class="modal-header"><h5 class="modal-title">Editar Moneda</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body row g-3">
+        <div class="col-12"><label class="form-label">Nombre</label><input type="text" name="nombremoneda" id="edit_moneda_nombre" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Tipo</label>
+            <select name="tipomoneda" id="edit_moneda_tipo" class="form-select">
+                <option value="Efectivo">Efectivo</option>
+                <option value="Virtual">Virtual</option>
+            </select>
+        </div>
+        <div class="col-6"><label class="form-label">Símbolo</label><input type="text" name="simbolomoneda" id="edit_moneda_simbolo" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Tasa de Conversión</label><input type="number" step="0.0001" name="tasaconversionmoneda" id="edit_moneda_tasa" class="form-control"></div>
+        <div class="col-6 form-check mt-4">
+            <input type="checkbox" class="form-check-input" name="estadomoneda" id="edit_moneda_estado">
+            <label class="form-check-label" for="edit_moneda_estado">Activa</label>
+        </div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-primary">Guardar Cambios</button></div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const modalEditarBingo = document.getElementById('modalEditarBingo');
+    if (modalEditarBingo) {
+        modalEditarBingo.addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+            document.getElementById('edit_bingo_id').value = btn.getAttribute('data-id');
+            document.getElementById('edit_bingo_titulo').value = btn.getAttribute('data-titulo');
+            document.getElementById('edit_bingo_fecha').value = btn.getAttribute('data-fecha');
+            document.getElementById('edit_bingo_tipo').value = btn.getAttribute('data-tipo');
+            document.getElementById('edit_bingo_lugar').value = btn.getAttribute('data-lugar');
+            document.getElementById('edit_bingo_url').value = btn.getAttribute('data-url');
+            document.getElementById('edit_bingo_precio').value = btn.getAttribute('data-precio');
+            document.getElementById('edit_bingo_premio').value = btn.getAttribute('data-premio');
+            document.getElementById('edit_bingo_descpremio').value = btn.getAttribute('data-descpremio');
+            document.getElementById('edit_bingo_estado').value = btn.getAttribute('data-estado');
+            document.getElementById('edit_bingo_descripcionpremios').value = btn.getAttribute('data-descripcionpremios');
+            document.getElementById('edit_bingo_unidadventa').value = btn.getAttribute('data-unidadventa');
+            document.getElementById('edit_bingo_unidadpremio').value = btn.getAttribute('data-unidadpremio');
+        });
+    }
+
+    const modalCrearPartida = document.getElementById('modalCrearPartida');
+    if (modalCrearPartida) {
+        modalCrearPartida.addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+            document.getElementById('crear_partida_idbingo').value = btn.getAttribute('data-idbingo');
+        });
+    }
+
+    const modalEditarSocio = document.getElementById('modalEditarSocio');
+    if (modalEditarSocio) {
+        modalEditarSocio.addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+            document.getElementById('edit_socio_id').value = btn.getAttribute('data-id');
+            document.getElementById('edit_socio_cedula').value = btn.getAttribute('data-cedula');
+            document.getElementById('edit_socio_nombres').value = btn.getAttribute('data-nombres');
+            document.getElementById('edit_socio_apellidos').value = btn.getAttribute('data-apellidos');
+            document.getElementById('edit_socio_telefono').value = btn.getAttribute('data-telefono');
+            document.getElementById('edit_socio_estado').value = btn.getAttribute('data-estado');
+            document.getElementById('edit_socio_tipo').value = btn.getAttribute('data-tipo');
+        });
+    }
+
+    const modalEditarJugador = document.getElementById('modalEditarJugador');
+    if (modalEditarJugador) {
+        modalEditarJugador.addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+            document.getElementById('edit_jugador_id').value = btn.getAttribute('data-id');
+            document.getElementById('edit_jugador_alias').value = btn.getAttribute('data-alias');
+            document.getElementById('edit_jugador_cedula').value = btn.getAttribute('data-cedula');
+            document.getElementById('edit_jugador_correo').value = btn.getAttribute('data-correo');
+            document.getElementById('edit_jugador_estado').value = btn.getAttribute('data-estado');
+        });
+    }
+
+    const modalEditarMoneda = document.getElementById('modalEditarMoneda');
+    if (modalEditarMoneda) {
+        modalEditarMoneda.addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+            document.getElementById('edit_moneda_id').value = btn.getAttribute('data-id');
+            document.getElementById('edit_moneda_nombre').value = btn.getAttribute('data-nombre');
+            document.getElementById('edit_moneda_tipo').value = btn.getAttribute('data-tipo');
+            document.getElementById('edit_moneda_simbolo').value = btn.getAttribute('data-simbolo');
+            document.getElementById('edit_moneda_tasa').value = btn.getAttribute('data-tasa');
+            document.getElementById('edit_moneda_estado').checked = (btn.getAttribute('data-estado') === 'on');
+        });
+    }
+
+    const checkAll = document.getElementById('checkAllJugadores');
+    const checksJugadores = document.querySelectorAll('.checkJugador');
+    const contador = document.getElementById('contadorSeleccionados');
+    const inputIds = document.getElementById('recarga_jugadores_ids');
+
+    function actualizarSeleccionados() {
+        const seleccionados = Array.from(checksJugadores).filter(c => c.checked).map(c => c.value);
+        if (contador) contador.textContent = seleccionados.length;
+        if (inputIds) inputIds.value = seleccionados.join(',');
+    }
+
+    if (checkAll) {
+        checkAll.addEventListener('change', function () {
+            checksJugadores.forEach(c => c.checked = checkAll.checked);
+            actualizarSeleccionados();
+        });
+    }
+    checksJugadores.forEach(c => c.addEventListener('change', actualizarSeleccionados));
+});
+</script>
+
+{% endblock %}

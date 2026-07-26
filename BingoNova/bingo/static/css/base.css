@@ -1,0 +1,142 @@
+/* =========================================
+   BASE CSS - BINGONOVA (Carnaval Neón)
+   ========================================= */
+
+/* 1. PALETA DE COLORES Y VARIABLES GLOBALES */
+:root {
+    /* Modo Claro (Por defecto) */
+    --bg-principal: #faf5ff;      /* Lavanda casi blanco */
+    --bg-tarjetas: #ffffff;
+    --texto-principal: #241b3a;   /* Púrpura muy oscuro */
+    --texto-secundario: #6b5b8a;  /* Púrpura grisáceo */
+
+    /* Color de Marca (Carnaval: Púrpura + Dorado + Turquesa) */
+    --color-primario: #a21caf;        /* Fucsia/Púrpura vibrante */
+    --color-primario-hover: #86198f;
+    --color-acento: #ffb703;          /* Dorado (bolas, premios) */
+    --color-acento-2: #0d9488;        /* Turquesa (éxito, aciertos) */
+
+    /* Bordes y Sombras */
+    --borde-suave: 1px solid #e9d5ff;
+    --sombra-minimalista: 0 4px 6px -1px rgba(162, 28, 175, 0.08), 0 2px 4px -1px rgba(162, 28, 175, 0.05);
+}
+
+/* Variables para Modo Oscuro (Púrpura Noche de Carnaval) */
+[data-bs-theme="dark"] {
+    --bg-principal: #140921;      /* Púrpura casi negro */
+    --bg-tarjetas: #1f1130;       /* Púrpura carbón */
+    --texto-principal: #f1e9ff;
+    --texto-secundario: #b8a6d9;
+
+    --borde-suave: 1px solid #3a2454;
+    --sombra-minimalista: 0 4px 10px -1px rgba(0, 0, 0, 0.6);
+}
+
+/* =========================================
+   2. REGLAS GENERALES Y TIPOGRAFÍA
+   ========================================= */
+body {
+    background-color: var(--bg-principal);
+    background-image: radial-gradient(circle at 10% 0%, rgba(162, 28, 175, 0.06), transparent 40%),
+                       radial-gradient(circle at 90% 20%, rgba(255, 183, 3, 0.06), transparent 40%);
+    color: var(--texto-principal);
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .navbar-brand {
+    font-family: 'Baloo 2', 'Inter', sans-serif;
+    letter-spacing: 0.2px;
+}
+
+a { color: var(--color-primario); }
+a:hover { color: var(--color-primario-hover); }
+
+/* =========================================
+   3. COMPONENTES REUTILIZABLES
+   ========================================= */
+.card-minimalista {
+    background-color: var(--bg-tarjetas);
+    border: var(--borde-suave);
+    border-radius: 18px;
+    box-shadow: var(--sombra-minimalista);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
+}
+
+.card-minimalista:hover {
+    box-shadow: 0 14px 24px -6px rgba(162, 28, 175, 0.18);
+    transform: translateY(-3px);
+}
+
+/* Botón principal del sistema (Sustituye al btn-primary básico de Bootstrap) */
+.btn-indigo {
+    background: linear-gradient(135deg, #a21caf 0%, #c026d3 100%);
+    color: white;
+    border: none;
+    border-radius: 999px;
+    font-weight: 600;
+    padding: 10px 22px;
+    box-shadow: 0 4px 12px rgba(162, 28, 175, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.btn-indigo:hover {
+    background: linear-gradient(135deg, #86198f 0%, #a21caf 100%);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(162, 28, 175, 0.45);
+}
+
+.btn-indigo:active {
+    transform: scale(0.97);
+}
+
+.text-indigo { color: var(--color-primario) !important; }
+.bg-indigo { background-color: var(--color-primario) !important; }
+
+/* Botones Bootstrap redondeados al estilo carnaval */
+.btn {
+    border-radius: 999px;
+    font-weight: 500;
+}
+
+/* Insignias con brillo dorado */
+.badge {
+    border-radius: 8px;
+}
+
+/* =========================================
+   4. SISTEMA DE ALERTAS (Posicionamiento)
+   ========================================= */
+.message-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    min-width: 300px;
+    pointer-events: none;
+}
+
+.message-container .alert {
+    pointer-events: auto;
+    border-radius: 14px;
+}
+
+.nav-link {
+    transition: color 0.3s ease;
+}
+.nav-link:hover {
+    color: var(--color-primario) !important;
+}
+
+/* Barra de navegación con degradado de marca */
+.navbar {
+    background: linear-gradient(90deg, var(--bg-tarjetas), var(--bg-tarjetas)) !important;
+    border-bottom: 3px solid var(--color-acento) !important;
+}
+
+/* Tarjetas y contenedores generales con esquinas suaves */
+.card, .panel {
+    border-radius: 18px !important;
+}
